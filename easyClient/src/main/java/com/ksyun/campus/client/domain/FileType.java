@@ -1,5 +1,9 @@
 package com.ksyun.campus.client.domain;
 
+/**
+ * 定义了一个简单的文件类型枚举，通过code获取相应的文件类型枚举常量，并提供获取枚举常量整数码值(code)的方法
+ */
+
 public enum FileType
 {
     Unknown(0),  Volume(1),  File(2),  Directory(3);

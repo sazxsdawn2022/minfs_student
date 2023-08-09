@@ -1,5 +1,5 @@
 server:
-  port: 8000
+  port: 8001
 spring:
   task:
     execution:
@@ -7,3 +7,13 @@ spring:
         core-size: 10
         max-size: 20
         queue-capacity: 1000
+
+
+zookeeper:
+  addr: 192.168.200.130:2181
+
+metaServer:
+  host: 127.0.0.1
+
+
+

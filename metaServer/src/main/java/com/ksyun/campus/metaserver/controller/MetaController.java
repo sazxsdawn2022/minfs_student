@@ -9,28 +9,35 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController("/")
 public class MetaController {
+    // 查看文件元信息
     @RequestMapping("stats")
     public ResponseEntity stats(@RequestHeader String fileSystem,@RequestParam String path){
         return new ResponseEntity(HttpStatus.OK);
     }
+    // 创建文件
     @RequestMapping("create")
     public ResponseEntity createFile(@RequestHeader String fileSystem, @RequestParam String path){
         return new ResponseEntity(HttpStatus.OK);
     }
+    // 创建目录
     @RequestMapping("mkdir")
     public ResponseEntity mkdir(@RequestHeader String fileSystem, @RequestParam String path){
         return new ResponseEntity(HttpStatus.OK);
     }
+    // 查看目录下的文件
     @RequestMapping("listdir")
     public ResponseEntity listdir(@RequestHeader String fileSystem,@RequestParam String path){
         return new ResponseEntity(HttpStatus.OK);
     }
+    // 删除文件
     @RequestMapping("delete")
     public ResponseEntity delete(@RequestHeader String fileSystem, @RequestParam String path){
         return new ResponseEntity(HttpStatus.OK);
     }
 
     /**
+     * 写文件，提交写
+     * 调完dataService需要把元信息提交一下
      * 保存文件写入成功后的元数据信息，包括文件path、size、三副本信息等
      * @param fileSystem
      * @param path
