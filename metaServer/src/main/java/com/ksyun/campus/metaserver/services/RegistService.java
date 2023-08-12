@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,6 +34,8 @@ public class RegistService implements ApplicationRunner {
     ZooKeeper zooKeeper;
     AtomicReference<List<String>> childNodesRef = new AtomicReference<>(); // 父节点/dataServers下的子节点
     String listenDataServerParentPath = "/dataServers"; //父路径
+
+
 
 
     //把本节点注册到zookeeper中，同时监听/dataServers父节点下下的子节点
@@ -75,8 +79,7 @@ public class RegistService implements ApplicationRunner {
         // 监控/dataServers节点下的子节点
         listenDataServers();
 
-//        // 关闭ZooKeeper客户端
-//        zooKeeper.close();
+
     }
 
 
@@ -86,9 +89,8 @@ public class RegistService implements ApplicationRunner {
         //先为/dataServers父节点下的每个子节点注册监听
         firstListenChildNodes();
 
-
         // 只要监听的/dataServer父节点下的子节点有变化，就刷新其子节点childNodesRef -> dataServerList
-        childNodesRef.set(zooKeeper.getChildren(listenDataServerParentPath, new Watcher() {
+        zooKeeper.getChildren(listenDataServerParentPath, new Watcher() {
             @Override
             public void process(WatchedEvent event) {
                 System.out.println("======第二波的监听器-开始=======");
@@ -97,8 +99,19 @@ public class RegistService implements ApplicationRunner {
                 if (event.getType() == Event.EventType.NodeChildrenChanged) {
                     try {
                         List<String> newChildNodes = zooKeeper.getChildren(listenDataServerParentPath, this);
+
                         // 更新 childNodesRef，保证childNodesRef里的子节点都是最新的
-                        childNodesRef.set(newChildNodes);
+                        //获取子节点数据集合
+                        List<String> childDataList = new ArrayList<>();
+                        for (String child : newChildNodes) {
+                            String childPath = listenDataServerParentPath + "/" + child;
+                            byte[] data = zooKeeper.getData(childPath, null, null);
+                            String childData = new String(data, StandardCharsets.UTF_8);
+                            // 将子节点的内容添加到集合中
+                            childDataList.add(childData);
+                        }
+                        childNodesRef.set(childDataList);
+
                         // 处理新的子节点列表
                         System.out.println("New child nodes: " + childNodesRef.get());
 
@@ -116,14 +129,27 @@ public class RegistService implements ApplicationRunner {
                 //这个数据内容变化的事件类型一定是被/dataServers的子节点监听到的
                 if (event.getType() == Event.EventType.NodeDataChanged) {
                     try {
-                        byte[] data = zooKeeper.getData(event.getPath(), this, null);
-                        String nodeData = new String(data);
+                        byte[] data1 = zooKeeper.getData(event.getPath(), this, null);
+                        String nodeData = new String(data1);
                         // 处理修改节点数据的逻辑
                         System.out.println("Node data changed: " + event.getPath());
                         System.out.println("New data: " + nodeData);
+
+                        // 更新 childNodesRef，保证childNodesRef里的子节点都是最新的
+                        List<String> newChildNodes = zooKeeper.getChildren(listenDataServerParentPath, this);
+                        List<String> childDataList = new ArrayList<>();
+                        for (String child : newChildNodes) {
+                            String childPath = listenDataServerParentPath + "/" + child;
+                            byte[] data = zooKeeper.getData(childPath, null, null);
+                            String childData = new String(data, StandardCharsets.UTF_8);
+                            // 将子节点的内容添加到集合中
+                            childDataList.add(childData);
+                        }
+                        childNodesRef.set(childDataList);
                     } catch (KeeperException | InterruptedException e) {
                         e.printStackTrace();
                     }
+
                 }
 
                 System.out.println("event.getType() = " + event.getType());
@@ -140,7 +166,7 @@ public class RegistService implements ApplicationRunner {
 
             }
 
-        }));
+        });
 
         // 处理初始的子节点列表
         System.out.println("Initial child nodes: " + childNodesRef.get());
@@ -157,7 +183,18 @@ public class RegistService implements ApplicationRunner {
 
         // 获取子节点列表，并为每个子节点设置监听器
         List<String> children = zooKeeper.getChildren(listenDataServerParentPath, null);
-        childNodesRef.set(children);
+
+        //获取子节点数据集合，初始化childNodesRef
+        List<String> childDataList = new ArrayList<>();
+        for (String child : children) {
+            String childPath = listenDataServerParentPath + "/" + child;
+            byte[] data = zooKeeper.getData(childPath, null, null);
+            String childData = new String(data, StandardCharsets.UTF_8);
+            // 将子节点的内容添加到集合中
+            childDataList.add(childData);
+        }
+        childNodesRef.set(childDataList);
+
         System.out.println("childNodesRef.get() = " + childNodesRef.get());
         // 注册子节点的数据变化监听器，相当于刚开始就给子节点注册了，
         // 避免下面listenDataServers()通过/dataServers父节点给子节点注册监听器，但第一次子节点数据变化不会被监控到的问题
@@ -170,11 +207,23 @@ public class RegistService implements ApplicationRunner {
                     System.out.println("======第一波的监听器-开始=======");
                     if (event.getType() == Event.EventType.NodeDataChanged) {
                         try {
-                            byte[] data = zooKeeper.getData(event.getPath(), this, null);
-                            String nodeData = new String(data);
+                            byte[] data1 = zooKeeper.getData(event.getPath(), this, null);
+                            String nodeData = new String(data1);
                             // 处理修改节点数据的逻辑
                             System.out.println("Node data changed: " + event.getPath());
                             System.out.println("New data: " + nodeData);
+
+                            // 更新 childNodesRef，保证childNodesRef里的子节点都是最新的
+                            List<String> newChildNodes = zooKeeper.getChildren(listenDataServerParentPath, this);
+                            List<String> childDataList = new ArrayList<>();
+                            for (String child : newChildNodes) {
+                                String childPath = listenDataServerParentPath + "/" + child;
+                                byte[] data = zooKeeper.getData(childPath, null, null);
+                                String childData = new String(data, StandardCharsets.UTF_8);
+                                // 将子节点的内容添加到集合中
+                                childDataList.add(childData);
+                            }
+                            childNodesRef.set(childDataList);
                         } catch (KeeperException | InterruptedException e) {
                             e.printStackTrace();
                         }
