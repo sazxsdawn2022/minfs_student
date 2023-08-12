@@ -12,13 +12,13 @@ public class DataServerMsg {
     private String host;
     private int port;
     private int fileTotal;
-    private int capacity; //单位：字节B
-    private int useCapacity;
+    private long capacity; //单位：字节B
+    private long useCapacity;
 
     public DataServerMsg() {
     }
 
-    public DataServerMsg(String host, int port, int fileTotal, int capacity, int useCapacity) {
+    public DataServerMsg(String host, int port, int fileTotal, long capacity, long useCapacity) {
         this.host = host;
         this.port = port;
         this.fileTotal = fileTotal;

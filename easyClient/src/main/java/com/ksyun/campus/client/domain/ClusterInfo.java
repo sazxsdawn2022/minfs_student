@@ -77,15 +77,15 @@ public class ClusterInfo {
         private String host;
         private int port;
         private int fileTotal;
-        private int capacity;
-        private int useCapacity;
+        private long capacity;
+        private long useCapacity;
 
         @JsonCreator
         public DataServerMsg(@JsonProperty("host") String host,
                              @JsonProperty("port") int port,
                              @JsonProperty("fileTotal") int fileTotal,
-                             @JsonProperty("capacity") int capacity,
-                             @JsonProperty("useCapacity") int useCapacity) {
+                             @JsonProperty("capacity") long capacity,
+                             @JsonProperty("useCapacity") long useCapacity) {
             this.host = host;
             this.port = port;
             this.fileTotal = fileTotal;
@@ -128,7 +128,7 @@ public class ClusterInfo {
             this.fileTotal = fileTotal;
         }
 
-        public int getCapacity() {
+        public long getCapacity() {
             return capacity;
         }
 
@@ -136,7 +136,7 @@ public class ClusterInfo {
             this.capacity = capacity;
         }
 
-        public int getUseCapacity() {
+        public long getUseCapacity() {
             return useCapacity;
         }
 

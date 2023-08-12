@@ -40,10 +40,10 @@ public class EFileSystem extends FileSystem{
         // 对 dataServerMsgList 进行排序，按照剩余容量从大到小排序
         Collections.sort(dataServerMsgList, new Comparator<DataServerMsg>() {
             public int compare(DataServerMsg msg1, DataServerMsg msg2) {
-                int remainingCapacity1 = msg1.getCapacity() - msg1.getUseCapacity();
-                int remainingCapacity2 = msg2.getCapacity() - msg2.getUseCapacity();
+                long remainingCapacity1 = msg1.getCapacity() - msg1.getUseCapacity();
+                long remainingCapacity2 = msg2.getCapacity() - msg2.getUseCapacity();
                 // 从大到小排序
-                return Integer.compare(remainingCapacity2, remainingCapacity1);
+                return Integer.compare((int) remainingCapacity2, (int) remainingCapacity1);
             }
         });
         // 获取剩余容量最大的三个对象
