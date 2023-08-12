@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ksyun.campus.metaserver.domain.ReplicaData;
 import com.ksyun.campus.metaserver.domain.StatInfo;
 import com.ksyun.campus.metaserver.domain.StatInfoSingle;
+import com.ksyun.campus.metaserver.pojo.DataServerMsg;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,6 +78,7 @@ public class MetaService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         //再转化为statusInfo元信息
         StatInfo statInfo = combine(statInfoSingles);
         String statInfoJson = objectMapper.writeValueAsString(statInfo);
@@ -103,10 +105,10 @@ public class MetaService {
             // 把zkStatInfoMap映射成statInfos集合
             statInfos = zkStatInfoMap;
 
-            // 添加新的statInfo到statInfos集合
+            //添加新的statInfo到statInfos集合
             statInfos.put(statInfo.getPath(), statInfoJson);
 
-            // 把statInfos集合转为json字符串
+            //把statInfos集合转为json字符串
             String updatedStatInfosJson = objectMapper.writeValueAsString(statInfos);
             System.out.println("原先已经有元信息，添加后的元信息map = " + updatedStatInfosJson);
 
@@ -117,6 +119,9 @@ public class MetaService {
             zooKeeper.setData(STAT_INFOS_NODE, data, stat.getVersion());
             zooKeeper.close();
         }
+
+        //最后更新三个dataServer节点的数据
+        updateDataServer(statInfo);
 
         return "文件元信息保存成功";
     }
@@ -200,4 +205,37 @@ public class MetaService {
         System.out.println("创建/statInfos节点并设置初始数据");
     }
 
+    //更新dataServer节点存放的部分数据，即fileTotal, useCapacity
+    public void updateDataServer(StatInfo statInfo) throws IOException, InterruptedException, KeeperException {
+        //用的容量
+        long useSize = statInfo.getSize();
+        List<ReplicaData> replicaData = statInfo.getReplicaData();
+
+        ZooKeeper zooKeeper = connectToZooKeeper();
+        for (ReplicaData replicaDatum : replicaData) {
+            //dataServer的ip:port
+            String address = replicaDatum.getDsNode();
+            String port = (address.split(":"))[1];
+            String dataServerNode = "/dataServers/dataServer" + port;
+
+
+            Stat stat = zooKeeper.exists(dataServerNode, false);
+            byte[] data = zooKeeper.getData(dataServerNode, false, stat);
+            String dataServerJson = new String(data);
+            System.out.println("dataServerJson = " + dataServerJson);
+            DataServerMsg dataServerMsg = new ObjectMapper().readValue(dataServerJson, DataServerMsg.class);
+            //更新文件总数fileTotal
+            dataServerMsg.setFileTotal(dataServerMsg.getFileTotal() + 1);
+            //更新已用容量useCapacity
+            dataServerMsg.setUseCapacity(dataServerMsg.getUseCapacity() + useSize);
+
+            //重新设置到dataServer节点
+            String dataServerMsgJson = new ObjectMapper().writeValueAsString(dataServerMsg);
+            Stat stat1 = zooKeeper.exists(dataServerNode, false);
+            zooKeeper.setData(dataServerNode,dataServerMsgJson.getBytes(), stat1.getVersion());
+            //zookeeper不用关，最后用完再关
+        }
+
+        zooKeeper.close();
+    }
 }
