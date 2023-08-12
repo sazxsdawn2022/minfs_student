@@ -1,26 +1,22 @@
 package com.ksyun.campus.metaserver.domain;
 
-public enum FileType
-{
-    Unknown(0),  Volume(1),  File(2),  Directory(3);
 
-    private int code;
-    FileType(int code) {
-        this.code=code;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+
+public enum FileType {
+    Unknown("Unknown"), Volume("Volume"), File("File"), Directory("Directory");
+
+    private String code;
+
+    FileType(String code) {
+        this.code = code;
     }
-    public int getCode(){
+
+    @JsonValue
+    public String getCodeValue() {
         return code;
     }
-    public static FileType get(int code){
-        switch (code){
-            case 1:
-                return Volume;
-            case 2:
-                return File;
-            case 3:
-                return Directory;
-            default:
-                return Unknown;
-        }
-    }
 }
+
+

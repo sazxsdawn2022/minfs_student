@@ -1,7 +1,7 @@
 package com.ksyun.campus.dataserver.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ksyun.campus.client.domain.FileType;
+import com.ksyun.campus.dataserver.domain.FileType;
 import com.ksyun.campus.dataserver.domain.ReplicaData;
 import com.ksyun.campus.dataserver.domain.StatInfoSingle;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,16 +34,18 @@ public class DataService {
         // 拼接文件路径
         String filePath = projectPath + File.separator + "data" + port + File.separator + path;
 
-        File file = new File(filePath);
-        File parentDir = file.getParentFile();
-        if (!parentDir.exists()) {
-            parentDir.mkdirs(); // 创建父目录及其父目录中的所有不存在的目录
-        }
-        try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
-            fos.write(data);
-        } catch (IOException e) {
-            // 处理写入文件时的异常
-            e.printStackTrace();
+        if(data != null) {
+            File file = new File(filePath);
+            File parentDir = file.getParentFile();
+            if (!parentDir.exists()) {
+                parentDir.mkdirs(); // 创建父目录及其父目录中的所有不存在的目录
+            }
+            try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
+                fos.write(data);
+            } catch (IOException e) {
+                // 处理写入文件时的异常
+                e.printStackTrace();
+            }
         }
 
 

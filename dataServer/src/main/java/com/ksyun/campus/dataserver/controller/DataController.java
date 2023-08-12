@@ -23,7 +23,7 @@ public class DataController {
      * @return
      */
     @RequestMapping(value = "write", method = RequestMethod.POST)
-    public ResponseEntity writeFile(@RequestParam String path, @RequestBody byte[] data) throws Exception {
+    public ResponseEntity writeFile(@RequestParam String path, @RequestBody(required = false) byte[] data) throws Exception {
         // 保存数据到本地文件
         String statInfoSingleJson = dataService.write(path, data);
 

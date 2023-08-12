@@ -1,12 +1,14 @@
 package com.ksyun.campus.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ksyun.campus.client.pojo.DataServerMsg;
+import com.ksyun.campus.client.pojo.MetaServerMsg;
+import com.ksyun.campus.client.service.FileSystemService;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,6 +21,8 @@ public class FSOutputStream extends OutputStream {
     private static final int MEMORY_BUFFER_SIZE = 1024 * 1024; // 1MB
     private ExecutorService executorService;
     private int flag = 0; //是否是本次写的最后一次callRemote，1是，0否
+    private List<String> statInfoSingles = new ArrayList<>();
+    private FileSystemService fileSystemService = new FileSystemService();
 
     public FSOutputStream(String path, List<DataServerMsg> dataServerMsgList, DataServerMsg dataServerMsgBac) {
         this.path = path;
@@ -85,12 +89,14 @@ public class FSOutputStream extends OutputStream {
 
     //在流关闭时，将剩余的内存缓冲区数据发送到dataServer并清空缓冲区
     private void flushRemainingData() {
-        if (!memoryBuffer.isEmpty()) {
+        //无论memoryBuffer是否有数据都再发一次请求，做个flag标记
+        flag = 1;
+//        if (!memoryBuffer.isEmpty()) {
             byte[] mergedBuffer = mergeBuffers(memoryBuffer);
             callRemote(mergedBuffer);
             memoryBuffer.clear();
             memoryBufferSize = 0;
-        }
+//        }
     }
 
     //将多个字节数组缓冲区合并成一个字节数组
@@ -125,6 +131,14 @@ public class FSOutputStream extends OutputStream {
             FileSystem fileSystem = new FileSystem();
             try {
                 String responseBody = fileSystem.callRemote("post", url, data);
+                if(flag == 1){
+                    statInfoSingles.add(responseBody);
+                }
+                if(statInfoSingles.size() == 3){
+                    //保存元信息
+                    toMetaServerSaveStatInfo(statInfoSingles);
+
+                }
                 System.out.println("responseBody=" + responseBody);
             } catch (Exception e) {
                 System.out.println("ops中发送callRemote出现异常，就重试备用dataServer");
@@ -142,5 +156,19 @@ public class FSOutputStream extends OutputStream {
             }
 
         }
+    }
+
+    //向metaServer发送请求保存元信息
+    public void toMetaServerSaveStatInfo(List<String> statInfoSingles) throws Exception {
+        MetaServerMsg metaServer = fileSystemService.getMetaServer();
+        String metaServerUrl = "http://" + metaServer.getHost() + ":" + metaServer.getPort() + "/write";
+        System.out.println("toMetaServerSaveStatInfo中的metaServerUrl = " + metaServerUrl);
+        for (String statInfoSingle : statInfoSingles) {
+            System.out.println("statInfoSingle = " + statInfoSingle);
+        }
+        byte[] statInfoSinglesBytes = new ObjectMapper().writeValueAsString(statInfoSingles).getBytes();
+        FileSystem fileSystem = new FileSystem();
+        String post = fileSystem.callRemote("post", metaServerUrl, statInfoSinglesBytes);
+        System.out.println("post = " + post);
     }
 }

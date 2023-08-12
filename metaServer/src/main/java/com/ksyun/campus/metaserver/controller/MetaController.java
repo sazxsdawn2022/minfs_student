@@ -5,10 +5,7 @@ import com.ksyun.campus.metaserver.services.MetaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -17,7 +14,7 @@ public class MetaController {
     @Resource
     private MetaService metaService;
 
-    //获取三个可用的dataServer，用来写
+    //获取三个可用的dataServer，用来写（现在是4个，如果有的话）
     @RequestMapping("getDataServers")
     public ResponseEntity getDataServers() throws JsonProcessingException {
         String dataServerListJson = metaService.pickDataServer();
@@ -53,15 +50,13 @@ public class MetaController {
      * 写文件，提交写
      * 调完dataService需要把元信息提交一下
      * 保存文件写入成功后的元数据信息，包括文件path、size、三副本信息等
-     * @param fileSystem
-     * @param path
-     * @param offset
-     * @param length
-     * @return
+     *
      */
-    @RequestMapping("write")
-    public ResponseEntity commitWrite(@RequestHeader String fileSystem, @RequestParam String path, @RequestParam int offset, @RequestParam int length){
-        return new ResponseEntity(HttpStatus.OK);
+    @RequestMapping(value = "write", method = RequestMethod.POST)
+    public ResponseEntity commitWrite(@RequestBody byte[] statInfoSinglesBytes) throws Exception {
+        String responseBody = metaService.toSaveStatInfo(statInfoSinglesBytes);
+
+        return new ResponseEntity(responseBody, HttpStatus.OK);
     }
 
     /**
