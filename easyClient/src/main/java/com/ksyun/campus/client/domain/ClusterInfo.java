@@ -1,11 +1,18 @@
 package com.ksyun.campus.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 import java.util.List;
 
 public class ClusterInfo {
     private MetaServerMsg masterMetaServer;
     private MetaServerMsg slaveMetaServer;
     private List<DataServerMsg> dataServer;
+
 
     public MetaServerMsg getMasterMetaServer() {
         return masterMetaServer;
@@ -31,9 +38,16 @@ public class ClusterInfo {
         this.dataServer = dataServer;
     }
 
-    public class MetaServerMsg{
+    public static class MetaServerMsg{
         private String host;
         private int port;
+
+        @JsonCreator
+        public MetaServerMsg(@JsonProperty("host") String host,
+                             @JsonProperty("port") int port) {
+            this.host = host;
+            this.port = port;
+        }
 
         public String getHost() {
             return host;
@@ -50,13 +64,45 @@ public class ClusterInfo {
         public void setPort(int port) {
             this.port = port;
         }
+
+        @Override
+        public String toString() {
+            return "MetaServerMsg{" +
+                    "host='" + host + '\'' +
+                    ", port=" + port +
+                    '}';
+        }
     }
-    public class DataServerMsg{
+    public static class DataServerMsg{
         private String host;
         private int port;
         private int fileTotal;
         private int capacity;
         private int useCapacity;
+
+        @JsonCreator
+        public DataServerMsg(@JsonProperty("host") String host,
+                             @JsonProperty("port") int port,
+                             @JsonProperty("fileTotal") int fileTotal,
+                             @JsonProperty("capacity") int capacity,
+                             @JsonProperty("useCapacity") int useCapacity) {
+            this.host = host;
+            this.port = port;
+            this.fileTotal = fileTotal;
+            this.capacity = capacity;
+            this.useCapacity = useCapacity;
+        }
+        @JsonCreator
+        public static DataServerMsg fromString(String json) throws IOException {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(json, DataServerMsg.class);
+        }
+
+        @JsonValue
+        public String toJson() throws IOException {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(this);
+        }
 
         public String getHost() {
             return host;
@@ -96,6 +142,17 @@ public class ClusterInfo {
 
         public void setUseCapacity(int useCapacity) {
             this.useCapacity = useCapacity;
+        }
+
+        @Override
+        public String toString() {
+            return "DataServerMsg{" +
+                    "host='" + host + '\'' +
+                    ", port=" + port +
+                    ", fileTotal=" + fileTotal +
+                    ", capacity=" + capacity +
+                    ", useCapacity=" + useCapacity +
+                    '}';
         }
     }
 

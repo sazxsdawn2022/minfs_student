@@ -1,14 +1,28 @@
 package com.ksyun.campus.metaserver.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.ksyun.campus.metaserver.services.MetaService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
+
 @RestController("/")
 public class MetaController {
+    @Resource
+    private MetaService metaService;
+
+    //获取三个可用的dataServer，用来写
+    @RequestMapping("getDataServers")
+    public ResponseEntity getDataServers() throws JsonProcessingException {
+        String dataServerListJson = metaService.pickDataServer();
+        return new ResponseEntity(dataServerListJson, HttpStatus.OK);
+    }
     // 查看文件元信息
     @RequestMapping("stats")
     public ResponseEntity stats(@RequestHeader String fileSystem,@RequestParam String path){

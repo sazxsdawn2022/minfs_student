@@ -64,7 +64,8 @@ public class HttpClientUtil {
 
 
         // 设置连接管理器、设置重试策略、设置请求配置对象
-        httpClient = HttpClients.custom().setConnectionManager(connectionManager).setRetryStrategy(new DefaultHttpRequestRetryStrategy(config.getMaxRetry(), TimeValue.ZERO_MILLISECONDS))
+        httpClient = HttpClients.custom().setConnectionManager(connectionManager)
+                .setRetryStrategy(new DefaultHttpRequestRetryStrategy(config.getMaxRetry(), TimeValue.ZERO_MILLISECONDS))
                 .setDefaultRequestConfig(reConfig)
                 .build();
 
