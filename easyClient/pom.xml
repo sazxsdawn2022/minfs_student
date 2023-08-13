@@ -17,4 +17,19 @@
             <version>5.2.1</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+
+                <!--  打包的jar放到父项目的workpublish目录-->
+                <configuration>
+                    <outputDirectory>${project.parent.basedir}/workpublish/easyClient</outputDirectory>
+                    <mainClass>com.ksyun.campus.client.EFileSystem</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

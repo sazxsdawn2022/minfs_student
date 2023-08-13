@@ -28,7 +28,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <!--  打包的jar放到父项目的workpublish目录-->
+                <configuration>
+                    <outputDirectory>${project.parent.basedir}/workpublish/dataServer</outputDirectory>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
 
 </project>
