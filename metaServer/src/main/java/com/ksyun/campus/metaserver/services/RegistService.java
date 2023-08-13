@@ -36,8 +36,6 @@ public class RegistService implements ApplicationRunner {
     String listenDataServerParentPath = "/dataServers"; //父路径
 
 
-
-
     //把本节点注册到zookeeper中，同时监听/dataServers父节点下下的子节点
     public void registToCenter() throws IOException, InterruptedException, KeeperException {
         zooKeeper = new ZooKeeper(zookeeperAddr, 5000, new Watcher() {
@@ -180,6 +178,12 @@ public class RegistService implements ApplicationRunner {
 
     //先监听/dataServers下现有的所有子节点
     public void firstListenChildNodes() throws InterruptedException, KeeperException {
+
+        //如果/dataServers节点不存在则创建
+        Stat exists = zooKeeper.exists(listenDataServerParentPath, false);
+        if(exists == null){
+            zooKeeper.create(listenDataServerParentPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
 
         // 获取子节点列表，并为每个子节点设置监听器
         List<String> children = zooKeeper.getChildren(listenDataServerParentPath, null);
