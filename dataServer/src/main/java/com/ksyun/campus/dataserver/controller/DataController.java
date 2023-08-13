@@ -33,15 +33,17 @@ public class DataController {
 
     /**
      * 在指定本地磁盘路径下，读取指定大小的内容后返回
-     * @param fileSystem
      * @param path
      * @param offset
      * @param length
      * @return
      */
     @RequestMapping("read")
-    public ResponseEntity readFile(@RequestHeader String fileSystem, @RequestParam String path, @RequestParam int offset, @RequestParam int length){
-        return new ResponseEntity(HttpStatus.OK);
+    public ResponseEntity readFile(@RequestParam String path, @RequestParam(name = "off") int offset, @RequestParam(name = "len") int length){
+
+        byte[] read = dataService.read(path, offset, length);
+
+        return new ResponseEntity(read, HttpStatus.OK);
     }
     /**
      * 关闭退出进程

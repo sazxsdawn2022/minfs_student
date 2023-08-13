@@ -1,5 +1,8 @@
 package com.ksyun.campus.client.domain;
 
+import lombok.Data;
+
+@Data
 public class ReplicaData {
     public String id; //副本的id
     public String dsNode; //格式为ip:port，副本存的节点信息是哪里

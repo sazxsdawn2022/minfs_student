@@ -1,6 +1,7 @@
 package com.ksyun.campus.metaserver.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ksyun.campus.metaserver.services.MetaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -61,13 +62,20 @@ public class MetaController {
 
     /**
      * 根据文件path查询三副本的位置，返回客户端具体ds、文件分块信息
-     * @param fileSystem
      * @param path
      * @return
      */
     @RequestMapping("open")
-    public ResponseEntity open(@RequestHeader String fileSystem,@RequestParam String path){
-        return new ResponseEntity(HttpStatus.OK);
+    public ResponseEntity open(@RequestParam String path){
+
+        String statInfo = "";
+        try {
+            statInfo = metaService.getStatInfoByPath(path);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        //返回path对应的元信息
+        return new ResponseEntity(statInfo, HttpStatus.OK);
     }
 
     /**

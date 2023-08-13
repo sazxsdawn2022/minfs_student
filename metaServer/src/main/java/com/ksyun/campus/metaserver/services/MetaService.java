@@ -238,4 +238,16 @@ public class MetaService {
 
         zooKeeper.close();
     }
+
+    // 增加由path获取path对应的元信息
+    public String getStatInfoByPath(String path) throws Exception {
+
+        // 获取/statInfos节点的数据
+        String statInfosJson = zkStatInfos();
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap<String, String> zkStatInfoMap = objectMapper.readValue(statInfosJson, new TypeReference<HashMap<String, String>>() {});
+        // 获取path对应的statInfo
+        String statInfo = zkStatInfoMap.get(path);
+        return statInfo;
+    }
 }

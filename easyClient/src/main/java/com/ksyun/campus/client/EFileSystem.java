@@ -3,6 +3,7 @@ package com.ksyun.campus.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ksyun.campus.client.domain.ClusterInfo;
+import com.ksyun.campus.client.domain.ReplicaData;
 import com.ksyun.campus.client.domain.StatInfo;
 import com.ksyun.campus.client.pojo.DataServerMsg;
 import com.ksyun.campus.client.pojo.MetaServerMsg;
@@ -24,9 +25,17 @@ public class EFileSystem extends FileSystem{
         this.fileName = fileName;
     }
 
-    public FSInputStream open(String path){
-        return null;
+    public FSInputStream open(String path) throws Exception {
+        MetaServerMsg metaServer = fileSystemService.getMetaServer();
+        String metaServerUrl = "http://" + metaServer.getHost() + ":" + metaServer.getPort() + "/open?path=" + path;
+        String statInfo = callRemote("get", metaServerUrl, null);
+        StatInfo statInfo1 = new ObjectMapper().readValue(statInfo, StatInfo.class);
+        List<ReplicaData> replicaData = statInfo1.getReplicaData();
+        FSInputStream fsInputStream = new FSInputStream(replicaData);
+
+        return fsInputStream;
     }
+
     public FSOutputStream create(String path) throws Exception {
         MetaServerMsg metaServer = fileSystemService.getMetaServer();
         String metaServerUrl = "http://" + metaServer.getHost() + ":" + metaServer.getPort() + "/getDataServers";

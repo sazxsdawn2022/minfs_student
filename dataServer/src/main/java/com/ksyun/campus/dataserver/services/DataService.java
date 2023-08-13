@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.ServletContext;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -91,6 +92,30 @@ public class DataService {
 
     public byte[] read(String path, int offset, int length) {
         //todo 根据path读取指定大小的内容
-        return null;
+
+        // 获取本项目的绝对路径
+        String projectPath = System.getProperty("user.dir");
+        // 拼接文件路径
+        String filePath = projectPath + File.separator + "data" + port + File.separator + path;
+
+        File file = new File(filePath);
+        byte[] buffer = new byte[length];
+        try (FileInputStream fis = new FileInputStream(file)) {
+            fis.skip(offset);
+            int bytesRead = fis.read(buffer);
+            if (bytesRead != -1) {
+                if (bytesRead < length) {
+                    byte[] trimmedBuffer = new byte[bytesRead];
+                    System.arraycopy(buffer, 0, trimmedBuffer, 0, bytesRead);
+                    return trimmedBuffer;
+                } else {
+                    return buffer;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "null".getBytes();
     }
 }
