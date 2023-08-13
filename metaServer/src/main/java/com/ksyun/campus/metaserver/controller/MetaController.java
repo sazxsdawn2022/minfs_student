@@ -23,8 +23,14 @@ public class MetaController {
     }
     // 查看文件元信息
     @RequestMapping("stats")
-    public ResponseEntity stats(@RequestHeader String fileSystem,@RequestParam String path){
-        return new ResponseEntity(HttpStatus.OK);
+    public ResponseEntity stats(@RequestParam String path){
+        String statInfoByPath = "";
+        try {
+            statInfoByPath = metaService.getStatInfoByPath(path);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return new ResponseEntity(statInfoByPath, HttpStatus.OK);
     }
     // 创建文件
     @RequestMapping("create")
