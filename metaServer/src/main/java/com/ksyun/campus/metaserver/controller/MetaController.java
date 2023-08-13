@@ -44,8 +44,14 @@ public class MetaController {
     }
     // 查看目录下的文件
     @RequestMapping("listdir")
-    public ResponseEntity listdir(@RequestHeader String fileSystem,@RequestParam String path){
-        return new ResponseEntity(HttpStatus.OK);
+    public ResponseEntity listdir(@RequestParam String path){
+        String listdir = "";
+        try {
+            listdir = metaService.listdir(path);
+        } catch (Exception e) {
+            return new ResponseEntity("获取失败", HttpStatus.OK);
+        }
+        return new ResponseEntity(listdir, HttpStatus.OK);
     }
     // 删除文件
     @RequestMapping("delete")

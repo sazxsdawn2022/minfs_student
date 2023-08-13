@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 @Service
@@ -301,5 +302,25 @@ public class MetaService {
             updateDataServer(statInfo, 0);
         }
         return true;
+    }
+
+    //增加由path返回path下面一层的所有文件和目录
+    public String listdir(String path) throws Exception {
+        // 获取/statInfos节点的数据
+        String statInfosJson = zkStatInfos();
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap<String, String> zkStatInfoMap = objectMapper.readValue(statInfosJson, new TypeReference<HashMap<String, String>>() {});
+        ArrayList<String> selectedStatInfoList = new ArrayList<>();
+
+        String newPath = path.endsWith("/") ? path : path + "/";
+        for (Map.Entry<String, String> entry : zkStatInfoMap.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith(newPath) && !key.substring(newPath.length()).contains("/")) {
+                selectedStatInfoList.add(entry.getValue());
+            }
+        }
+        String selectedStatInfoJson = new ObjectMapper().writeValueAsString(selectedStatInfoList);
+        return selectedStatInfoJson;
+
     }
 }

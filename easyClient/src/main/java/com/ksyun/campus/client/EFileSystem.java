@@ -98,8 +98,18 @@ public class EFileSystem extends FileSystem{
         StatInfo statInfo = new ObjectMapper().readValue(statInfoJson, StatInfo.class);
         return statInfo;
     }
-    public List<StatInfo> listFileStats(String path){
-        return null;
+    public List<StatInfo> listFileStats(String path) throws Exception {
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        MetaServerMsg metaServer = fileSystemService.getMetaServer();
+        String metaServerUrl = "http://" + metaServer.getHost() + ":" + metaServer.getPort() + "/listdir?path=" + path;
+        String statInfosJson = callRemote("get", metaServerUrl, null);
+        System.out.println("statInfosJson = " + statInfosJson);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<StatInfo> statInfoList = objectMapper.readValue(statInfosJson, new TypeReference<List<StatInfo>>() {});
+        return statInfoList;
     }
     public ClusterInfo getClusterInfo() throws Exception {
         List<String> dataServersChildrenMsg = fileSystemService.getChildrenData("/dataServers");
