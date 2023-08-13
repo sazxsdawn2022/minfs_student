@@ -71,7 +71,12 @@ public class EFileSystem extends FileSystem{
 
         return fsOutputStream;
     }
-    public boolean mkdir(String path){return false;}
+    public boolean mkdir(String path) throws Exception {
+        FSOutputStream fsOutputStream = create(path + "duskgaga");
+        fsOutputStream.close();
+
+        return true;
+    }
     public boolean delete(String path){return false;}
     public StatInfo getFileStats(String path){
         return null;
