@@ -43,8 +43,18 @@ public class MetaController {
     }
     // 删除文件
     @RequestMapping("delete")
-    public ResponseEntity delete(@RequestHeader String fileSystem, @RequestParam String path){
-        return new ResponseEntity(HttpStatus.OK);
+    public ResponseEntity delete(@RequestParam String path){
+        boolean b = false;
+        try {
+            b = metaService.deleteByPath(path);
+        } catch (Exception e) {
+            return new ResponseEntity("删除失败",HttpStatus.OK);
+        }
+
+        if(b){
+            return new ResponseEntity("删除成功",HttpStatus.OK);
+        }
+        return new ResponseEntity("删除失败",HttpStatus.OK);
     }
 
     /**

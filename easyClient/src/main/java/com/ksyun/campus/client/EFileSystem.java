@@ -77,7 +77,17 @@ public class EFileSystem extends FileSystem{
 
         return true;
     }
-    public boolean delete(String path){return false;}
+    public boolean delete(String path) throws Exception {
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        MetaServerMsg metaServer = fileSystemService.getMetaServer();
+        String metaServerUrl = "http://" + metaServer.getHost() + ":" + metaServer.getPort() + "/delete?path=" + path;
+        String get = callRemote("get", metaServerUrl, null);
+        System.out.println("get = " + get);
+
+        return true;
+    }
     public StatInfo getFileStats(String path){
         return null;
     }

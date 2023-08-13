@@ -3,6 +3,7 @@ package com.ksyun.campus.metaserver.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ksyun.campus.metaserver.domain.FileType;
 import com.ksyun.campus.metaserver.domain.ReplicaData;
 import com.ksyun.campus.metaserver.domain.StatInfo;
 import com.ksyun.campus.metaserver.domain.StatInfoSingle;
@@ -120,8 +121,11 @@ public class MetaService {
             zooKeeper.close();
         }
 
-        //最后更新三个dataServer节点的数据
-        updateDataServer(statInfo);
+        //如果新增的是文件就更新，是目录就不用更新
+        if(statInfo.getType().equals(FileType.File)) {
+            //最后更新三个dataServer节点的数据
+            updateDataServer(statInfo, 1);
+        }
 
         return "文件元信息保存成功";
     }
@@ -206,7 +210,8 @@ public class MetaService {
     }
 
     //更新dataServer节点存放的部分数据，即fileTotal, useCapacity
-    public void updateDataServer(StatInfo statInfo) throws IOException, InterruptedException, KeeperException {
+    //只有新增，删除文件才更新 flag标识1代表增加，0代表删除
+    public void updateDataServer(StatInfo statInfo, int flag) throws IOException, InterruptedException, KeeperException {
         //用的容量
         long useSize = statInfo.getSize();
         List<ReplicaData> replicaData = statInfo.getReplicaData();
@@ -224,10 +229,18 @@ public class MetaService {
             String dataServerJson = new String(data);
             System.out.println("dataServerJson = " + dataServerJson);
             DataServerMsg dataServerMsg = new ObjectMapper().readValue(dataServerJson, DataServerMsg.class);
-            //更新文件总数fileTotal
-            dataServerMsg.setFileTotal(dataServerMsg.getFileTotal() + 1);
-            //更新已用容量useCapacity
-            dataServerMsg.setUseCapacity(dataServerMsg.getUseCapacity() + useSize);
+
+            if(flag == 1) {  //新增文件
+                //更新文件总数fileTotal
+                dataServerMsg.setFileTotal(dataServerMsg.getFileTotal() + 1);
+                //更新已用容量useCapacity
+                dataServerMsg.setUseCapacity(dataServerMsg.getUseCapacity() + useSize);
+            } else if (flag == 0) {  //删除文件
+                //更新文件总数fileTotal
+                dataServerMsg.setFileTotal(dataServerMsg.getFileTotal() - 1);
+                //更新已用容量useCapacity
+                dataServerMsg.setUseCapacity(dataServerMsg.getUseCapacity() - useSize);
+            }
 
             //重新设置到dataServer节点
             String dataServerMsgJson = new ObjectMapper().writeValueAsString(dataServerMsg);
@@ -249,5 +262,44 @@ public class MetaService {
         // 获取path对应的statInfo
         String statInfo = zkStatInfoMap.get(path);
         return statInfo;
+    }
+
+    //增加由path删除文件和文件夹的元信息，如果删除的是文件夹则不用更新dataServer节点信息
+    public boolean deleteByPath(String path) throws Exception {
+        String toDeleteStatInfo = "";
+
+        String zkStatInfos = zkStatInfos();
+
+        if ("".equals(zkStatInfos) || "Initialdata".equals(zkStatInfos)) {
+            // /statInfos中没有存元信息
+            return false;
+        } else {
+            // /statInfos节点中已经存放了一些元数据
+            ObjectMapper objectMapper = new ObjectMapper();
+            HashMap<String, String> zkStatInfoMap = objectMapper.readValue(zkStatInfos, new TypeReference<HashMap<String, String>>() {});
+            // 把zkStatInfoMap映射成statInfos集合
+            statInfos = zkStatInfoMap;
+
+            //获取要删除的元信息
+            toDeleteStatInfo = statInfos.get(path);
+            //删除path对应的元信息
+            statInfos.remove(path);
+            String updatedStatInfosJson = objectMapper.writeValueAsString(statInfos);
+
+            ZooKeeper zooKeeper = connectToZooKeeper();
+            // 更新/statInfos节点的数据
+            byte[] data = updatedStatInfosJson.getBytes();
+            Stat stat = zooKeeper.exists(STAT_INFOS_NODE, false);
+            zooKeeper.setData(STAT_INFOS_NODE, data, stat.getVersion());
+            zooKeeper.close();
+        }
+
+        StatInfo statInfo = new ObjectMapper().readValue(toDeleteStatInfo, StatInfo.class);
+
+        //最后更新三个dataServer节点的数据
+        if(statInfo.getType().equals(FileType.File)) {
+            updateDataServer(statInfo, 0);
+        }
+        return true;
     }
 }
