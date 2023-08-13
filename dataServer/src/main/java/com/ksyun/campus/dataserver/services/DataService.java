@@ -28,6 +28,7 @@ public class DataService {
     private String port;
     @Value("${dataServer.host}")
     private String host;
+    private int newOffset = 0;
 
     public String write(String path, byte[] data) throws Exception {
 
