@@ -15,10 +15,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Type;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 @Service
@@ -93,7 +91,16 @@ public class MetaService {
             // /statInfos中没有存元信息
             ZooKeeper zooKeeper = connectToZooKeeper();
 
+            // 这里要递归将文件的前面目录都存上元信息
+            HashMap<String, String> dirStatInfoMap = getDirStatInfoMap(statInfo);
+            for (Map.Entry<String, String> entry : dirStatInfoMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                statInfos.put(key, value);
+            }
+            //把自己也加上
             statInfos.put(statInfo.getPath(), statInfoJson);
+
             String statInfosJson = objectMapper.writeValueAsString(statInfos);
             System.out.println("第一次，添加的元信息statInfosJson = " + statInfosJson);
             // 创建并设置/statInfos节点的数据
@@ -108,6 +115,13 @@ public class MetaService {
             statInfos = zkStatInfoMap;
 
             //添加新的statInfo到statInfos集合
+            // 这里要递归将文件的前面目录都存上元信息
+            HashMap<String, String> dirStatInfoMap = getDirStatInfoMap(statInfo);
+            for (Map.Entry<String, String> entry : dirStatInfoMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                statInfos.put(key, value);
+            }
             statInfos.put(statInfo.getPath(), statInfoJson);
 
             //把statInfos集合转为json字符串
@@ -323,4 +337,58 @@ public class MetaService {
         return selectedStatInfoJson;
 
     }
+
+    //增加方法，通过传进来的statInfo对象，返回该对象对应path前递归的目录map(path,statInfo)
+    public HashMap<String, String> getDirStatInfoMap(StatInfo statInfo) {
+        String path = statInfo.getPath();
+        List<String> dirPathList = new ArrayList<>();
+        HashMap<String, String> dirPathStatInfo = new HashMap<>();
+
+        // 递归分解路径，提取目录路径
+        String[] pathSegments = path.split("/");
+        StringBuilder currentDirPath = new StringBuilder();
+        for (String segment : pathSegments) {
+            if (!segment.isEmpty()) {
+                currentDirPath.append("/").append(segment);
+                dirPathList.add(currentDirPath.toString());
+            }
+        }
+
+        // 生成对应的 StatInfo 对象字符串
+        for (String dirPath : dirPathList) {
+            StatInfo dirStatInfo = new StatInfo();
+            dirStatInfo.setPath(dirPath);
+            dirStatInfo.setSize(0);
+            dirStatInfo.setMtime(System.currentTimeMillis());
+            dirStatInfo.setType(FileType.Directory);
+
+            List<ReplicaData> replicaDataList = new ArrayList<>();
+            for (ReplicaData replicaData : statInfo.getReplicaData()) {
+                ReplicaData newReplicaData = new ReplicaData();
+                newReplicaData.setId(UUID.randomUUID().toString());
+                newReplicaData.setDsNode(replicaData.getDsNode());
+                newReplicaData.setPath(dirPath);
+                replicaDataList.add(newReplicaData);
+            }
+            dirStatInfo.setReplicaData(replicaDataList);
+
+            String dirStatInfoString = null;
+            try {
+                dirStatInfoString = new ObjectMapper().writeValueAsString(dirStatInfo);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            dirPathStatInfo.put(dirPath, dirStatInfoString);
+        }
+
+        // 打印结果
+        for (String dirPath : dirPathStatInfo.keySet()) {
+            String statInfoString = dirPathStatInfo.get(dirPath);
+            System.out.println("Directory Path: " + dirPath);
+            System.out.println("StatInfo: " + statInfoString);
+            System.out.println();
+        }
+        return dirPathStatInfo;
+    }
+
 }
